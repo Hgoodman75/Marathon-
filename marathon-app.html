@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#080b0f">
+<title>Year to Marathon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080b0f;
+    --surface: #0e1118;
+    --surface2: #131820;
+    --border: #1a2030;
+    --text: #ddd8cc;
+    --muted: #556070;
+    --faint: #1e2838;
+    --p1: #e86c2f;
+    --p2: #d4a827;
+    --p3: #4a9e6b;
+    --p4: #3d7cbf;
+    --easy: #4ade80;
+    --tempo: #fb923c;
+    --long: #c084fc;
+    --rest: #6b7280;
+    --gym: #f472b6;
+    --race: #fbbf24;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { background: var(--bg); color: var(--text); font-family: 'Lora', Georgia, serif; min-height: 100vh; overflow-x: hidden; }
+
+  /* HEADER */
+  .header {
+    position: sticky; top: 0; z-index: 100;
+    background: linear-gradient(180deg, #0a0d14 0%, #080b0f 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 18px 12px;
+  }
+  .header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+  .header-eyebrow { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 4px; text-transform: uppercase; color: var(--p1); margin-bottom: 3px; }
+  .header-title { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 2px; color: #f0ece4; line-height: 1; }
+  .header-stat { text-align: right; }
+  .header-stat-label { font-family: 'IBM Plex Mono', monospace; font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+  .header-stat-num { font-family: 'Bebas Neue', sans-serif; font-size: 30px; line-height: 1; }
+
+  /* PHASE BAR */
+  .phase-bar { display: flex; gap: 2px; margin-bottom: 5px; }
+  .phase-segment { display: flex; gap: 1px; cursor: pointer; }
+  .phase-pip { height: 5px; border-radius: 2px; transition: background 0.2s; min-width: 2px; }
+  .phase-labels { display: flex; justify-content: space-between; }
+  .phase-label { font-family: 'IBM Plex Mono', monospace; font-size: 8px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; transition: color 0.2s; }
+
+  /* NAV TABS */
+  .tabs { display: flex; gap: 6px; padding: 14px 18px 0; }
+  .tab { padding: 7px 16px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: all 0.15s; }
+  .tab.active { border-color: var(--phase-color, var(--p1)); background: rgba(232,108,47,0.1); color: var(--text); }
+
+  /* MAIN */
+  .main { padding: 16px 18px 100px; max-width: 600px; margin: 0 auto; }
+
+  /* WEEK NAV */
+  .week-nav { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .week-btn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border); background: transparent; color: var(--text); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: border-color 0.15s; flex-shrink: 0; }
+  .week-btn:active { background: var(--surface2); }
+  .week-info { flex: 1; text-align: center; }
+  .week-num { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; }
+  .week-phase { font-family: 'Lora', serif; font-size: 15px; font-weight: 600; margin-top: 2px; }
+
+  /* PROGRESS DOTS */
+  .progress-bar { display: flex; gap: 4px; margin-bottom: 14px; }
+  .progress-pip { flex: 1; height: 3px; border-radius: 2px; background: var(--faint); transition: background 0.3s; }
+  .progress-pip.done { background: var(--phase-color, var(--p1)); }
+
+  /* PHASE CARD */
+  .phase-card { border-radius: 10px; padding: 14px 16px; margin-bottom: 16px; border: 1px solid; }
+  .phase-card-sub { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 6px; }
+  .phase-card-desc { font-size: 12.5px; color: #9a9488; line-height: 1.7; margin-bottom: 10px; }
+  .phase-stats { display: flex; gap: 20px; }
+  .phase-stat label { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 2px; }
+  .phase-stat span { font-size: 13px; color: var(--text); }
+
+  /* DAY CARDS */
+  .day-card { margin-bottom: 6px; }
+  .day-row { background: var(--surface); border: 1px solid var(--border); border-radius: 9px; padding: 13px 14px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: border-color 0.15s; user-select: none; }
+  .day-row.done { background: rgba(255,255,255,0.03); }
+  .day-row.open { border-color: #2a3545; border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+  .day-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; width: 30px; flex-shrink: 0; }
+  .type-badge { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 1px; text-transform: uppercase; padding: 3px 7px; border-radius: 4px; flex-shrink: 0; border: 1px solid transparent; }
+  .day-title { flex: 1; font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: color 0.2s; }
+  .day-title.done { color: var(--muted); text-decoration: line-through; }
+  .day-miles { font-family: 'IBM Plex Mono', monospace; font-size: 11px; flex-shrink: 0; }
+  .check-btn { width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--border); background: transparent; color: transparent; font-size: 12px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-weight: 700; transition: all 0.2s; }
+  .check-btn.done { color: var(--bg); }
+  .day-detail { background: #0b0e16; border: 1px solid #1a2030; border-top: none; border-bottom-left-radius: 9px; border-bottom-right-radius: 9px; padding: 12px 14px 14px; margin-top: -3px; }
+  .day-detail p { font-size: 13px; color: #8a8880; line-height: 1.8; }
+
+  /* TYPE COLORS */
+  .type-Easy   { background: #0e2018; color: #4ade80; border-color: #22543d30; }
+  .type-Tempo  { background: #1a1000; color: #fb923c; border-color: #7c3a1030; }
+  .type-Medium { background: #0e1520; color: #60a5fa; border-color: #1e3a6030; }
+  .type-Long, .type-TaperLong { background: #150e20; color: #c084fc; border-color: #5b2d8030; }
+  .type-Race   { background: #1a0a00; color: #fbbf24; border-color: #7a4a0030; }
+  .type-Gym    { background: #1a0010; color: #f472b6; border-color: #7a1a5030; }
+  .type-Rest   { background: #111318; color: #6b7280; border-color: #2a303830; }
+  .dot-Easy   { background: #22c55e; }
+  .dot-Tempo  { background: #f97316; }
+  .dot-Medium { background: #3b82f6; }
+  .dot-Long, .dot-TaperLong { background: #a855f7; }
+  .dot-Race   { background: #f59e0b; }
+  .dot-Gym    { background: #ec4899; }
+  .dot-Rest   { background: #4b5563; }
+  .miles-Easy   { color: #22c55e; }
+  .miles-Tempo  { color: #f97316; }
+  .miles-Medium { color: #3b82f6; }
+  .miles-Long, .miles-TaperLong { color: #a855f7; }
+  .miles-Race   { color: #f59e0b; }
+
+  /* RUN KEY */
+  .run-key { background: var(--surface); border: 1px solid var(--border); border-radius: 9px; padding: 14px 16px; margin-top: 18px; }
+  .run-key-title { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 10px; }
+  .run-key-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .run-key-item label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 1px; }
+  .run-key-item p { font-size: 11px; color: var(--muted); margin-top: 2px; line-height: 1.5; }
+
+  /* MILEAGE CHART */
+  .chart-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 12px 12px; margin-bottom: 18px; }
+  .chart-labels { display: flex; justify-content: space-between; margin-top: 6px; }
+  .chart-label { font-family: 'IBM Plex Mono', monospace; font-size: 8px; letter-spacing: 1px; text-transform: uppercase; }
+  .phase-summary { background: var(--surface); border-radius: 9px; padding: 13px 16px; margin-bottom: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border: 1px solid; }
+  .phase-summary:active { opacity: 0.8; }
+  .ps-name { font-size: 13px; font-weight: 600; }
+  .ps-weeks { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .ps-miles { font-family: 'IBM Plex Mono', monospace; font-size: 16px; }
+  .ps-unit { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--muted); letter-spacing: 1px; }
+
+  /* OVERVIEW */
+  .section-title { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 14px; }
+  .weekly-template { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 20px; }
+  .template-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--faint); }
+  .template-row:last-child { border-bottom: none; }
+  .template-day { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted); width: 30px; letter-spacing: 1px; }
+  .template-desc { font-size: 12px; color: #778090; }
+  .milestone { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--faint); cursor: pointer; }
+  .milestone:active { opacity: 0.7; }
+  .milestone-icon { font-size: 18px; width: 28px; text-align: center; }
+  .milestone-label { flex: 1; font-size: 13px; }
+  .milestone-week { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 1px; }
+
+  /* WEIGHT TRACKER */
+  .weight-section { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+  .weight-input-row { display: flex; gap: 8px; margin-top: 12px; }
+  .weight-input { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); font-family: 'IBM Plex Mono', monospace; font-size: 16px; outline: none; }
+  .weight-input:focus { border-color: var(--p1); }
+  .weight-btn { background: var(--p1); border: none; border-radius: 8px; padding: 10px 18px; color: #fff; font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; font-weight: 500; }
+  .weight-btn:active { opacity: 0.8; }
+  .weight-log { margin-top: 14px; }
+  .weight-entry { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--faint); }
+  .weight-entry:last-child { border-bottom: none; }
+  .weight-date { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted); }
+  .weight-val { font-family: 'Bebas Neue', sans-serif; font-size: 22px; }
+  .weight-delta { font-family: 'IBM Plex Mono', monospace; font-size: 10px; }
+  .weight-progress { margin-top: 14px; }
+  .weight-progress-bar { height: 6px; background: var(--faint); border-radius: 3px; margin-top: 6px; overflow: hidden; }
+  .weight-progress-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--p1), var(--p3)); transition: width 0.5s ease; }
+  .weight-stats { display: flex; gap: 16px; margin-top: 12px; }
+  .weight-stat label { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; display: block; }
+  .weight-stat span { font-size: 15px; font-weight: 600; }
+
+  svg text { font-family: 'IBM Plex Mono', monospace; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div>
+      <div class="header-eyebrow">Year 29 → 30</div>
+      <div class="header-title">Marathon Plan</div>
+    </div>
+    <div class="header-stat">
+      <div class="header-stat-label">Days Done</div>
+      <div class="header-stat-num" id="totalDone" style="color: var(--p1)">0</div>
+    </div>
+  </div>
+  <div class="phase-bar" id="phaseBar"></div>
+  <div class="phase-labels" id="phaseLabels"></div>
+</div>
+
+<div class="tabs" id="tabs">
+  <button class="tab active" onclick="setView('week')">Week</button>
+  <button class="tab" onclick="setView('mileage')">Mileage</button>
+  <button class="tab" onclick="setView('overview')">Overview</button>
+  <button class="tab" onclick="setView('weight')">Weight</button>
+</div>
+
+<div class="main" id="main"></div>
+
+<script>
+// ─── DATA ────────────────────────────────────────────────────────────────────
+
+const PHASES = [
+  { id:1, name:"Foundation",    weeks:[1,12],  color:"#e86c2f", sub:"Adapt. Don't race.",        targetWeight:"270–280 lbs", mileage:"8–18 mi/wk",  desc:"Walk before you run. Your connective tissue needs 8–12 weeks to adapt. Don't let ego kill this phase." },
+  { id:2, name:"Base Build",    weeks:[13,26], color:"#d4a827", sub:"Stack miles. Drop weight.",  targetWeight:"240–260 lbs", mileage:"18–32 mi/wk", desc:"This is where the real transformation happens. Mileage climbs, weight drops, and you start feeling like a runner." },
+  { id:3, name:"Half Marathon", weeks:[27,39], color:"#4a9e6b", sub:"Prove the concept.",         targetWeight:"220–240 lbs", mileage:"32–42 mi/wk", desc:"Target a half marathon around week 35. If you can do 13.1, the full is just a training problem." },
+  { id:4, name:"Marathon Build",weeks:[40,52], color:"#3d7cbf", sub:"Peak. Taper. Execute.",      targetWeight:"200–220 lbs", mileage:"35–45 mi/wk", desc:"Long runs peak at 20 miles, three weeks before race day. Then you taper. Then you run your marathon." },
+];
+
+function getPhase(w) { return PHASES.find(p => w >= p.weeks[0] && w <= p.weeks[1]); }
+
+// Phase 1: run/walk progressions
+function p1(w) {
+  const rwArr = [
+    "Run 1 min / Walk 2 min × 8 sets","Run 1.5 min / Walk 1.5 min × 8 sets",
+    "Run 2 min / Walk 1 min × 8 sets","Run 3 min / Walk 1 min × 7 sets",
+    "Run 5 min / Walk 1 min × 4 sets","Run 8 min / Walk 1 min × 3 sets",
+    "Run 10 min / Walk 1 min × 2 + 10 min","Run 15 min continuous",
+    "Run 18 min continuous","Run 20 min continuous","Run 23 min continuous","Run 25–28 min continuous"
+  ];
+  const rw = rwArr[w-1];
+  const longs = [2,2.5,3,3.5,4,4.5,5,5.5,6,6.5,7,8];
+  const ld = longs[w-1];
+  return [
+    {day:"Mon",type:"Easy",  label:"Easy Run/Walk",         miles:null, detail: rw + ". First run of the week. Start slow, end slow." },
+    {day:"Tue",type:"Easy",  label:"Easy Run/Walk",         miles:null, detail: rw + ". Identical effort to Monday. Boring is the goal right now." },
+    {day:"Wed",type:"Gym",   label:"Gym Day",               miles:null, detail:"Your gym session. Focus on single-leg work and glutes — these protect your knees and hips from running injury." },
+    {day:"Thu",type:"Easy",  label:"Easy Run/Walk",         miles:null, detail: rw + ". If anything feels sharp or painful, walk the whole thing today." },
+    {day:"Fri",type:"Easy",  label:"Short Easy Run",        miles:null, detail:(w<=6 ? rw : "15–20 min easy, no pressure") + ". Prep your legs for Saturday's long run." },
+    {day:"Sat",type:"Long",  label:"Long Run — "+ld+" mi",  miles:ld,   detail: ld+" miles easy. Walk breaks are fine. Bring water." + (ld>=6 ? " Bring a gel — start fueling practice." : "") },
+    {day:"Sun",type:"Rest",  label:"Full Rest",             miles:0,    detail:"Complete rest. Eat protein, hydrate, sleep 8 hours. This is when adaptation happens." },
+  ];
+}
+
+// Phase 2
+function p2(w) {
+  const i = w-13;
+  const easy = +(3.5+i*0.2).toFixed(1);
+  const med  = +(4.5+i*0.25).toFixed(1);
+  const long = +(8+i*0.4).toFixed(1);
+  const hasTempo = i>=4;
+  return [
+    {day:"Mon",type:"Easy",  label:"Easy Run — "+easy+" mi",           miles:easy, detail:easy+" miles easy. Conversational pace. Full sentences the whole time."},
+    {day:"Tue",type:hasTempo?"Tempo":"Easy", label:hasTempo?"Tempo Intervals":"Easy Run — "+easy+" mi", miles:easy, detail:hasTempo?"1 mi easy warmup → "+Math.min(2+Math.floor(i*0.15),4)+"×5 min at 7/10 effort with 90 sec walk rest → 1 mi cooldown":""+easy+" miles easy."},
+    {day:"Wed",type:"Gym",   label:"Gym Day",                           miles:null, detail:"Bulgarian split squats, hip thrusts, step-ups, Copenhagen planks. Running needs strong single-leg stability."},
+    {day:"Thu",type:"Easy",  label:"Easy Run — "+easy+" mi",           miles:easy, detail:easy+" miles easy. Mid-week recovery run."},
+    {day:"Fri",type:"Medium",label:"Medium Run — "+med+" mi",          miles:med,  detail:med+" miles at a comfortable but purposeful pace. 70–75% effort."},
+    {day:"Sat",type:"Long",  label:"Long Run — "+long+" mi",           miles:long, detail:long+" miles easy throughout."+(long>=10?" Fuel every 45 min — race-day practice.":"")},
+    {day:"Sun",type:"Rest",  label:"Full Rest",                        miles:0,    detail:"Full rest. Eat well. Protein + carbs to rebuild."},
+  ];
+}
+
+// Phase 3
+function p3(w) {
+  const i = w-27;
+  const isRace = w===35, isTaper = w===34;
+  const easy = +(5+i*0.15).toFixed(1);
+  const tempo = +(4+i*0.15).toFixed(1);
+  const med  = +(7+i*0.2).toFixed(1);
+  const long = isRace ? 13.1 : isTaper ? 8 : Math.min(+(9+i*0.35).toFixed(1),13);
+  if (isRace) return [
+    {day:"Mon",type:"Easy",label:"Easy Shakeout — 3 mi",   miles:3,    detail:"3 miles very easy. Nothing heroic this week."},
+    {day:"Tue",type:"Easy",label:"Easy Run — 4 mi",        miles:4,    detail:"4 miles easy + 4×20 sec strides at end to stay sharp."},
+    {day:"Wed",type:"Gym", label:"Gym Day — Light",        miles:null, detail:"Upper body only or light mobility. No leg fatigue this week."},
+    {day:"Thu",type:"Easy",label:"Shakeout — 2 mi",        miles:2,    detail:"2 miles easy. Pack your race bag tonight."},
+    {day:"Fri",type:"Rest",label:"Rest / Race Prep",       miles:0,    detail:"Full rest. Eat extra carbs. Lay out your kit. Sleep early."},
+    {day:"Sat",type:"Race",label:"🏁 HALF MARATHON — 13.1 mi", miles:13.1, detail:"Race day. Start 30 sec/mile slower than you think. Miles 1–6 easy. Pick it up 7–10. Empty the tank at the finish."},
+    {day:"Sun",type:"Rest",label:"Rest & Celebrate",       miles:0,    detail:"You ran a half marathon. Rest completely. Eat whatever you want."},
+  ];
+  return [
+    {day:"Mon",type:"Easy",  label:"Easy Run — "+easy+" mi",   miles:easy, detail:easy+" miles easy. Post-weekend recovery."},
+    {day:"Tue",type:"Tempo", label:"Tempo Run — "+tempo+" mi", miles:tempo,detail:"1 mi warmup → "+(tempo-2).toFixed(1)+" mi at tempo (3–4 words, not a conversation) → 1 mi cooldown."},
+    {day:"Wed",type:"Gym",   label:"Gym Day",                  miles:null, detail:"Lifting is injury prevention now. Hips, glutes, single-leg stability over absolute load."},
+    {day:"Thu",type:"Easy",  label:"Easy Run — "+easy+" mi",   miles:easy, detail:easy+" miles easy. Recovery from Tuesday's tempo."},
+    {day:"Fri",type:"Medium",label:"Medium Run — "+med+" mi",  miles:med,  detail:med+" miles. Last "+Math.round(med*0.3)+" miles at goal half marathon pace."},
+    {day:"Sat",type:isTaper?"TaperLong":"Long", label:(isTaper?"Taper ":"")+"Long Run — "+long+" mi", miles:long, detail:isTaper?""+long+" miles easy. Resist the urge to race it.":""+long+" miles easy. Fuel every 45 min. Practice your exact race-day nutrition plan."},
+    {day:"Sun",type:"Rest",  label:"Full Rest",                miles:0,    detail:"Full rest. Recover for the week ahead."},
+  ];
+}
+
+// Phase 4
+function p4(w) {
+  const i = w-40;
+  const isTaper = w>=50, isRace = w===52;
+  const easy = isTaper ? Math.max(3, 6-(w-49)) : +(5.5+i*0.15).toFixed(1);
+  const med  = isTaper ? Math.max(4, 8-(w-49)*2) : +(8+i*0.25).toFixed(1);
+  const longArr = [null,14,10,26.2];
+  const long = isRace ? 26.2 : isTaper ? (w===50?14:10) : Math.min(+(13+i*0.7).toFixed(1),20);
+  if (isRace) return [
+    {day:"Mon",type:"Rest", label:"Full Rest",                  miles:0,    detail:"Rest. You've done the work. Trust the training."},
+    {day:"Tue",type:"Easy", label:"Easy Shakeout — 3 mi",       miles:3,    detail:"3 miles easy with 4×20 sec strides. Keep the legs awake."},
+    {day:"Wed",type:"Easy", label:"Easy Run — 2 mi",            miles:2,    detail:"2 miles very easy. Save everything for Saturday."},
+    {day:"Thu",type:"Rest", label:"Rest",                       miles:0,    detail:"Rest. Eat extra carbs. Hydrate aggressively."},
+    {day:"Fri",type:"Rest", label:"Race Eve — Rest",            miles:0,    detail:"Full rest. Carb-load dinner. Lay out ALL your gear. Sleep by 9pm. Set two alarms."},
+    {day:"Sat",type:"Race", label:"🏆 MARATHON — 26.2 mi",      miles:26.2, detail:"A year of work. Start slow — miles 1–13 easy. Stay controlled 14–20. Miles 20–26 are pure mental. You trained for this exact moment."},
+    {day:"Sun",type:"Rest", label:"You're a Marathoner",        miles:0,    detail:"Rest as long as you need. No running for at least 2 weeks. You did it."},
+  ];
+  return [
+    {day:"Mon",type:"Rest",  label:"Rest",                                                    miles:0,    detail:"Full rest. Recovery is training."},
+    {day:"Tue",type:"Easy",  label:"Easy Run — "+easy+" mi",                                 miles:easy, detail:easy+" miles easy. Almost embarrassingly slow pace."},
+    {day:"Wed",type:"Gym",   label:isTaper?"Gym Day — Light":"Gym Day",                      miles:null, detail:isTaper?"Short session. No leg training in the final 3 weeks.":"Maintenance only — hips, glutes, core. You're a runner now."},
+    {day:"Thu",type:isTaper?"Easy":"Tempo", label:isTaper?"Easy Run — "+easy+" mi":"Tempo/Marathon Pace — "+med+" mi", miles:isTaper?easy:med, detail:isTaper?easy+" miles easy with 4 short strides.":"2 mi warmup → "+(med-4).toFixed(1)+" mi at marathon goal pace → 2 mi cooldown."},
+    {day:"Fri",type:"Easy",  label:"Easy Run — "+Math.max(3,easy-1)+" mi",                  miles:Math.max(3,easy-1), detail:Math.max(3,easy-1)+" miles easy. Leg-loosener before Saturday."},
+    {day:"Sat",type:isTaper?"TaperLong":"Long", label:(isTaper?"Taper ":"")+"Long Run — "+long+" mi", miles:long, detail:long>=18?""+long+" miles. Fuel every 40 min. Run miles "+(long-4)+"–"+long+" at marathon goal pace if feeling good.":""+long+" miles easy. Fuel practice."},
+    {day:"Sun",type:"Rest",  label:"Full Rest",                                              miles:0,    detail:"Full rest. Big meal. Sleep."},
+  ];
+}
+
+function getWeekPlan(w) {
+  if(w<=12) return p1(w);
+  if(w<=26) return p2(w);
+  if(w<=39) return p3(w);
+  return p4(w);
+}
+
+function weekMiles(w) {
+  return getWeekPlan(w).reduce((s,d)=>s+(d.miles||0),0);
+}
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+
+let state = {
+  week: 1,
+  view: 'week',
+  expanded: null,
+  done: {},      // { weekNum: [dayIdx,...] }
+  weights: [],   // [{date, lbs}]
+};
+
+function save() { localStorage.setItem('marathon_v2', JSON.stringify(state)); }
+function load() {
+  try {
+    const s = localStorage.getItem('marathon_v2');
+    if(s) state = {...state, ...JSON.parse(s)};
+  } catch(e){}
+}
+
+// ─── RENDER ──────────────────────────────────────────────────────────────────
+
+function setView(v) {
+  state.view = v;
+  state.expanded = null;
+  save();
+  render();
+}
+
+function setWeek(w) {
+  state.week = Math.max(1, Math.min(52, w));
+  state.expanded = null;
+  save();
+  render();
+}
+
+function toggleDay(w, i) {
+  if(!state.done[w]) state.done[w]=[];
+  const idx = state.done[w].indexOf(i);
+  if(idx>=0) state.done[w].splice(idx,1);
+  else state.done[w].push(i);
+  save();
+  render();
+}
+
+function toggleExpand(i) {
+  state.expanded = state.expanded===i ? null : i;
+  render();
+}
+
+function totalDone() { return Object.values(state.done).flat().length; }
+
+function render() {
+  const phase = getPhase(state.week);
+  const pc = phase?.color || '#e86c2f';
+
+  // Update CSS var
+  document.documentElement.style.setProperty('--phase-color', pc);
+
+  // Header stat
+  document.getElementById('totalDone').textContent = totalDone();
+  document.getElementById('totalDone').style.color = pc;
+
+  // Phase bar
+  renderPhaseBar(pc);
+
+  // Tabs
+  document.querySelectorAll('.tab').forEach((t,i)=>{
+    const views = ['week','mileage','overview','weight'];
+    t.classList.toggle('active', views[i]===state.view);
+    t.style.borderColor = views[i]===state.view ? pc : '';
+    t.style.background = views[i]===state.view ? pc+'18' : '';
+  });
+
+  // Main content
+  const main = document.getElementById('main');
+  if(state.view==='week') main.innerHTML = renderWeek(phase, pc);
+  else if(state.view==='mileage') main.innerHTML = renderMileage(pc);
+  else if(state.view==='overview') main.innerHTML = renderOverview();
+  else if(state.view==='weight') main.innerHTML = renderWeight(pc);
+
+  // Attach events after render
+  attachEvents(phase, pc);
+}
+
+function renderPhaseBar(pc) {
+  const bar = document.getElementById('phaseBar');
+  const labels = document.getElementById('phaseLabels');
+  bar.innerHTML = PHASES.map(p => {
+    const count = p.weeks[1]-p.weeks[0]+1;
+    const pips = Array.from({length:count},(_,i)=>{
+      const w = p.weeks[0]+i;
+      const active = w===state.week;
+      const past = w<state.week;
+      const bg = active ? p.color : past ? p.color+'55' : '#1a2030';
+      return `<div class="phase-pip" style="flex:1;background:${bg}" onclick="setWeek(${w})"></div>`;
+    }).join('');
+    return `<div class="phase-segment" style="flex:${count}">${pips}</div>`;
+  }).join('');
+  labels.innerHTML = PHASES.map(p=>{
+    const active = state.week>=p.weeks[0]&&state.week<=p.weeks[1];
+    return `<div class="phase-label" style="flex:${p.weeks[1]-p.weeks[0]+1};color:${active?p.color:'#444'}" onclick="setWeek(${p.weeks[0]})">${p.name}</div>`;
+  }).join('');
+}
+
+function renderWeek(phase, pc) {
+  const plan = getWeekPlan(state.week);
+  const done = state.done[state.week]||[];
+  const totalW = weekMiles(state.week).toFixed(1);
+  const diet = [{cal:'2,700',pro:'220g'},{cal:'2,500',pro:'210g'},{cal:'2,400',pro:'200g'},{cal:'2,600',pro:'190g'}][(phase?.id||1)-1];
+
+  let html = `
+  <div class="week-nav">
+    <button class="week-btn" id="prevWeek">←</button>
+    <div class="week-info">
+      <div class="week-num">Week ${state.week} of 52 · ${totalW} miles</div>
+      <div class="week-phase" style="color:${pc}">Phase ${phase?.id}: ${phase?.name} — ${phase?.sub}</div>
+    </div>
+    <button class="week-btn" id="nextWeek">→</button>
+  </div>
+  <div class="progress-bar">
+    ${plan.map((_,i)=>`<div class="progress-pip${done.includes(i)?' done':''}"></div>`).join('')}
+  </div>
+  <div class="phase-card" style="background:${pc}10;border-color:${pc}30">
+    <div class="phase-card-sub" style="color:${pc}">${phase?.sub}</div>
+    <div class="phase-card-desc">${phase?.desc}</div>
+    <div class="phase-stats">
+      <div class="phase-stat"><label>Target Weight</label><span>${phase?.targetWeight}</span></div>
+      <div class="phase-stat"><label>Weekly Miles</label><span>${phase?.mileage}</span></div>
+      <div class="phase-stat"><label>Calories/day</label><span>${diet.cal}</span></div>
+    </div>
+  </div>`;
+
+  plan.forEach((d,i)=>{
+    const isDone = done.includes(i);
+    const isOpen = state.expanded===i;
+    const typeKey = d.type.replace(' ','');
+    html += `
+    <div class="day-card">
+      <div class="day-row${isDone?' done':''}${isOpen?' open':''}" data-expand="${i}">
+        <div class="day-label">${d.day}</div>
+        <div class="type-badge type-${typeKey}">${d.type}</div>
+        <div class="day-title${isDone?' done':''}">${d.label}</div>
+        ${d.miles>0?`<div class="day-miles miles-${typeKey}">${d.miles}mi</div>`:''}
+        ${d.type!=='Gym'?`<button class="check-btn${isDone?' done':''}" data-check="${i}" style="${isDone?`border-color:${pc};background:${pc}`:`border-color:#1e2838`}">${isDone?'✓':''}</button>`:'<div style="width:28px"></div>'}
+      </div>
+      ${isOpen?`<div class="day-detail"><p>${d.detail}</p></div>`:''}
+    </div>`;
+  });
+
+  html += `
+  <div class="run-key">
+    <div class="run-key-title">Run Types</div>
+    <div class="run-key-grid">
+      <div class="run-key-item"><label class="type-Easy" style="background:none;border:none;padding:0">Easy</label><p>Conversational. Full sentences. 60–70% max HR.</p></div>
+      <div class="run-key-item"><label class="type-Tempo" style="background:none;border:none;padding:0">Tempo</label><p>Comfortably hard. 3–4 words. 80–85% max HR.</p></div>
+      <div class="run-key-item"><label class="type-Medium" style="background:none;border:none;padding:0">Medium</label><p>Steady effort. Between easy and tempo. 70–78%.</p></div>
+      <div class="run-key-item"><label class="type-Long" style="background:none;border:none;padding:0">Long</label><p>Easy throughout. Never race your long run.</p></div>
+    </div>
+  </div>`;
+
+  return html;
+}
+
+function renderMileage(pc) {
+  const data = Array.from({length:52},(_,i)=>({w:i+1,mi:+weekMiles(i+1).toFixed(1)}));
+  const max = Math.max(...data.map(d=>d.mi));
+  const W=580, H=160;
+
+  let bars = data.map((d,i)=>{
+    const ph = getPhase(d.w);
+    const bh = (d.mi/max)*140;
+    const bw = W/52-1;
+    const x = i*(W/52);
+    const col = d.w===state.week ? ph?.color : ph?.color+'50';
+    return `<rect x="${x}" y="${H-bh}" width="${bw}" height="${bh}" fill="${col}" rx="1" data-goto="${d.w}" style="cursor:pointer"/>`;
+  }).join('');
+
+  const grid = [10,20,30,40].map(v=>`
+    <line x1="0" y1="${H-(v/max)*140}" x2="${W}" y2="${H-(v/max)*140}" stroke="#1e2838" stroke-width="0.5" stroke-dasharray="4 4"/>
+    <text x="2" y="${H-4-(v/max)*140}" fill="#334" font-size="9">${v}</text>
+  `).join('');
+
+  const curX = ((state.week-1)/52)*W + (W/52)/2;
+
+  let html = `
+  <div class="section-title">Weekly Mileage — 52 Weeks</div>
+  <div class="chart-wrap">
+    <svg viewBox="0 0 ${W} ${H+10}" style="width:100%;display:block">
+      ${PHASES.map(p=>`<rect x="${((p.weeks[0]-1)/52)*W}" y="0" width="${((p.weeks[1]-p.weeks[0]+1)/52)*W}" height="${H}" fill="${p.color}" opacity="0.04"/>`).join('')}
+      ${grid}
+      ${bars}
+      <line x1="${curX}" y1="0" x2="${curX}" y2="${H}" stroke="${pc}" stroke-width="1" opacity="0.7"/>
+    </svg>
+    <div class="chart-labels">
+      ${PHASES.map(p=>`<div class="chart-label" style="color:${p.color}">${p.name}</div>`).join('')}
+    </div>
+  </div>`;
+
+  PHASES.forEach(p=>{
+    const phData = data.filter(d=>d.w>=p.weeks[0]&&d.w<=p.weeks[1]);
+    const lo = Math.min(...phData.map(d=>d.mi));
+    const hi = Math.max(...phData.map(d=>d.mi));
+    html += `<div class="phase-summary" style="border-color:${p.color}25" data-goto="${p.weeks[0]}">
+      <div><div class="ps-name" style="color:${p.color}">${p.name}</div><div class="ps-weeks">Weeks ${p.weeks[0]}–${p.weeks[1]}</div></div>
+      <div style="text-align:right"><div class="ps-miles" style="color:${p.color}">${lo}–${hi}</div><div class="ps-unit">MI / WEEK</div></div>
+    </div>`;
+  });
+
+  return html;
+}
+
+function renderOverview() {
+  const template = [
+    {day:"Mon",type:"Easy",   desc:"Short easy run — recovery from weekend"},
+    {day:"Tue",type:"Quality",desc:"Easy (Ph1) → Tempo intervals (Ph2+)"},
+    {day:"Wed",type:"Gym",    desc:"Your gym session — single-leg focus"},
+    {day:"Thu",type:"Easy",   desc:"Easy run — mid-week base miles"},
+    {day:"Fri",type:"Medium", desc:"Medium run — build toward marathon pace"},
+    {day:"Sat",type:"Long",   desc:"Long run — the week's anchor workout"},
+    {day:"Sun",type:"Rest",   desc:"Full rest — where adaptation happens"},
+  ];
+  const milestones = [
+    {w:3,  icon:"📅",label:"June 6 — Local 5K Race",         color:"#fbbf24"},
+    {w:8,  icon:"🏃",label:"Run 30 min non-stop",             color:"#4ade80"},
+    {w:12, icon:"🦴",label:"Phase 1 Complete — joints adapted",color:"#e86c2f"},
+    {w:20, icon:"📍",label:"First double-digit long run",     color:"#d4a827"},
+    {w:24, icon:"🥈",label:"10K Race (optional)",             color:"#d4a827"},
+    {w:35, icon:"🏁",label:"Half Marathon Race Day",          color:"#4a9e6b"},
+    {w:47, icon:"🔥",label:"Peak Week — ~45 miles",           color:"#3d7cbf"},
+    {w:50, icon:"🧘",label:"Taper Begins",                    color:"#3d7cbf"},
+    {w:52, icon:"🏆",label:"MARATHON RACE DAY",               color:"#f59e0b"},
+  ];
+
+  let html = `
+  <div class="section-title">Every Week Looks Like This</div>
+  <div class="weekly-template">
+    ${template.map(r=>`
+    <div class="template-row">
+      <div class="template-day">${r.day}</div>
+      <div class="type-badge type-${r.type}" style="font-size:9px">${r.type}</div>
+      <div class="template-desc">${r.desc}</div>
+    </div>`).join('')}
+  </div>
+  <div class="section-title">Race & Milestone Calendar</div>
+  ${milestones.map(m=>`
+  <div class="milestone" data-goto="${m.w}">
+    <div class="milestone-icon">${m.icon}</div>
+    <div class="milestone-label" style="color:${state.week>=m.w?'var(--muted)':'var(--text)'}">${m.label}</div>
+    <div class="milestone-week" style="color:${m.color}">WK ${m.w}</div>
+  </div>`).join('')}`;
+
+  return html;
+}
+
+function renderWeight(pc) {
+  const weights = state.weights || [];
+  const start = 300;
+  const goal = 200;
+  const current = weights.length ? weights[weights.length-1].lbs : start;
+  const lost = start - current;
+  const toGo = current - goal;
+  const pct = Math.min(100, (lost/(start-goal))*100);
+
+  let html = `
+  <div class="section-title">Weight Tracker</div>
+  <div class="weight-section">
+    <div class="weight-stats">
+      <div class="weight-stat"><label>Current</label><span style="color:${pc}">${current} lbs</span></div>
+      <div class="weight-stat"><label>Lost</label><span style="color:#4ade80">${lost > 0 ? '-'+lost : '0'} lbs</span></div>
+      <div class="weight-stat"><label>To Goal</label><span style="color:#fb923c">${toGo} lbs</span></div>
+    </div>
+    <div class="weight-progress">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted)">300 lbs START</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted)">200 lbs GOAL</span>
+      </div>
+      <div class="weight-progress-bar"><div class="weight-progress-fill" style="width:${pct}%"></div></div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);margin-top:6px;text-align:center">${pct.toFixed(1)}% of the way there</div>
+    </div>
+    <div class="weight-input-row">
+      <input class="weight-input" type="number" id="weightInput" placeholder="Enter weight (lbs)" min="150" max="400">
+      <button class="weight-btn" id="logWeightBtn" style="background:${pc}">LOG</button>
+    </div>
+  </div>`;
+
+  if(weights.length > 0) {
+    html += `<div class="section-title">Weekly Log</div><div class="weight-section">`;
+    const recent = [...weights].reverse().slice(0,12);
+    recent.forEach((entry,i)=>{
+      const prev = recent[i+1];
+      const delta = prev ? entry.lbs - prev.lbs : null;
+      const deltaStr = delta===null ? '' : (delta>0?`<span style="color:#f87171">+${delta}</span>`:`<span style="color:#4ade80">${delta}</span>`);
+      html += `<div class="weight-entry">
+        <div class="weight-date">${entry.date}</div>
+        <div style="display:flex;align-items:center;gap:12px">
+          ${deltaStr}
+          <div class="weight-val" style="color:${pc}">${entry.lbs}</div>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+
+    // Mini chart
+    if(weights.length > 1) {
+      const minW = Math.min(...weights.map(d=>d.lbs))-5;
+      const maxW = Math.max(...weights.map(d=>d.lbs))+5;
+      const W2=560, H2=100;
+      const pts = weights.map((d,i)=>{
+        const x = weights.length===1 ? W2/2 : (i/(weights.length-1))*W2;
+        const y = H2-((d.lbs-minW)/(maxW-minW))*H2;
+        return `${x},${y}`;
+      }).join(' ');
+      html += `<div class="chart-wrap">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:10px">Weight Progress</div>
+        <svg viewBox="0 0 ${W2} ${H2+10}" style="width:100%;display:block">
+          <polyline points="${pts}" fill="none" stroke="${pc}" stroke-width="2" stroke-linejoin="round"/>
+          ${weights.map((d,i)=>{
+            const x = weights.length===1?W2/2:(i/(weights.length-1))*W2;
+            const y = H2-((d.lbs-minW)/(maxW-minW))*H2;
+            return `<circle cx="${x}" cy="${y}" r="3" fill="${pc}"/>`;
+          }).join('')}
+        </svg>
+      </div>`;
+    }
+  }
+
+  return html;
+}
+
+// ─── EVENT DELEGATION ────────────────────────────────────────────────────────
+
+function attachEvents(phase, pc) {
+  const main = document.getElementById('main');
+
+  main.onclick = (e) => {
+    // Expand day
+    const row = e.target.closest('[data-expand]');
+    if(row && !e.target.closest('[data-check]')) {
+      toggleExpand(parseInt(row.dataset.expand));
+      return;
+    }
+    // Check day
+    const check = e.target.closest('[data-check]');
+    if(check) { toggleDay(state.week, parseInt(check.dataset.check)); return; }
+    // Go to week
+    const goto = e.target.closest('[data-goto]');
+    if(goto) { setWeek(parseInt(goto.dataset.goto)); setView('week'); return; }
+    // Log weight
+    if(e.target.id==='logWeightBtn' || e.target.closest('#logWeightBtn')) {
+      const input = document.getElementById('weightInput');
+      const val = parseFloat(input.value);
+      if(val>=100 && val<=500) {
+        if(!state.weights) state.weights=[];
+        const today = new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'});
+        state.weights.push({date:today, lbs:val});
+        input.value='';
+        save();
+        render();
+      }
+      return;
+    }
+  };
+
+  // Week nav
+  const prev = document.getElementById('prevWeek');
+  const next = document.getElementById('nextWeek');
+  if(prev) prev.onclick = ()=>setWeek(state.week-1);
+  if(next) next.onclick = ()=>setWeek(state.week+1);
+}
+
+// ─── BOOT ────────────────────────────────────────────────────────────────────
+load();
+render();
+</script>
+</body>
+</html>
